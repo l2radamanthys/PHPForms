@@ -29,7 +29,7 @@ class MyForm extends Form {
     }
 
     function clean_apellido() {
-        if (!strcmp($this->nombre, $this->apellido)) {
+        if (strcmp($this->nombre, $this->apellido)) {
             return True;
         }
         else {
@@ -41,41 +41,21 @@ class MyForm extends Form {
 }
 
 
-#$field = new FormField();
-#echo $field;
-
-#$tf =  new TextField('nombre','Su nombre');
-
-#echo "<br />";
-
-#echo $tf->label();
-#echo $tf;
-
-/*
-$e = new FormFieldErrors();
-$e->add_msj("Error: Nombre Usuario Invalido");
-$e->add_msj("Error: Apellido Usuario Invalido");
-
-echo $e;
-*/
-
-echo "<br /> <br />";
-
 $form = new MyForm(True);
-$form->nombre->insert_attr('class', 'miclases');
-$d = array('nombre' => 'Ricardo', 'apellido'=>'Quiroga');
-$form->set_data($d);
-$form->is_valid();
+#$form->nombre->insert_attr('class', 'miclases');
+#$d = array('nombre' => 'Ricardo', 'apellido'=>'Quiroga');
+#$form->set_data($d);
 #echo $form;
 
+echo '<form action="" method="POST">';
+echo "<table>";
 echo $form->as_table();
+echo '<tr><td colspan="2"><input type="submit"></td></tr>';
+echo "</table></form>";
 
-#$form->nombre->errors->add_msj("test");
-
-#echo $form->nombre->errors;
-echo $form->errors();
-
-
-
-#echo form.field.errors
+if (!empty($_POST))
+{
+    $form->is_valid();
+    echo $form->errors();
+}
 ?>

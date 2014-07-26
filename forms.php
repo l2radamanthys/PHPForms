@@ -17,6 +17,8 @@
  *
  */
 
+include "condition.php";
+
 //include con los mensajes segun el lenguaje
 include "form-lang-es.php";
 
@@ -29,7 +31,8 @@ class FormFieldErrors implements Iterator {
     var $position;
     var $errors;
 
-    function __construct() {
+    function __construct() 
+    {
         $this->errors = array();
         $position = 0;
     }
@@ -38,27 +41,32 @@ class FormFieldErrors implements Iterator {
     /*
      * Conjunto de metodos abstratos para funcionar como iterador
      */
-    function rewind() {
+    function rewind() 
+    {
         $this->position = 0;
     }
 
 
-    function current() {
+    function current() 
+    {
         return $this->array[$this->position];
     }
 
 
-    function key() {
+    function key() 
+    {
         return $this->position;
     }
 
 
-    function next() {
+    function next() 
+    {
         $this->position += 1;
     }
 
 
-    function valid() {
+    function valid() 
+    {
         return isset($this->array[$this->position]);
     }
 
@@ -66,8 +74,8 @@ class FormFieldErrors implements Iterator {
     /*
      * Agrega un mensaje de error en formato texto, a la lista de Errores
      *
-     * @param string $text 
-     */ 
+     * @param string $text
+     */
     function add_msj($text) {
         $this->errors[] = $text;
     }
@@ -78,8 +86,8 @@ class FormFieldErrors implements Iterator {
      * ubiese devolvera un valor False
      *
      * @return boolean
-     * 
-     */ 
+     *
+     */
     function not_errors() {
         if (count($this->errors) == 0) {
             return True;
@@ -92,7 +100,7 @@ class FormFieldErrors implements Iterator {
     /*
      * Por defecto Formateara la lista de Errores como una lista HTML, si se desea
      * personalizar el estilo de error defina una clase CSS3 .php-form-error
-     */ 
+     */
     function __toString() {
         $str = "<ul class=\"php-form-error\">\n";
         foreach($this->errors as $error) {
@@ -128,8 +136,9 @@ class FormField {
      * @param string $value valor por defecto del campo
      * @param boolean $required si el campo es obligatorio
      * @param array $attr atributos adicionales dentro del campo
+     * @param array condition condiciones de evaluacion
      */
-    function __construct($label='', $value='', $required=False, $attr=NULL, $condition=NULL) {
+    function __construct($label='', $value='', $required=False, $attr=NULL, $condition=array('NOT_NULL'=>'NULL')) {
         $this->label = $label;
         $this->value = $value;
         //$this->name = "";
@@ -140,7 +149,7 @@ class FormField {
             $this->other_attr = array();
         }
         $this->required = $required;
-        $this->condition = $condition; 
+        $this->condition = $condition;        
         $this->errors = new FormFieldErrors();
         $this->auto_id = False;
     }
@@ -166,20 +175,38 @@ class FormField {
         $this->other_attr[$key] = $value;
     }
 
+
+    /*
+     * evalua las validaciones genericas en caso que sea requerido validar
+     * el campo del formulario
+     *
+     */
     function required_validate() {
         if ($this->required) {
-            if ($this->value == '' || $this->value == NULL) {
-                $this->errors->add_msj(NOT_NULL_PRE.$this->name.NOT_NULL_POS);
+            if (array_key_exists('NOT_NULL', $this->condition)) 
+            {
+                if ($this->value == '' || $this->value == NULL) {
+                    $this->errors->add_msj(NOT_NULL_PRE.$this->name.NOT_NULL_POS);
+                }
             }
+
+            if (array_key_exists('IS_INT', $this->condition)) 
+            {
+                if (!field_is_int($this->value))
+                {
+                    $this->errors->add_msj(IS_INT_PRE.$this->name.IS_INT_POS);
+                }
+            }
+
         }
     }
 
     /*
      * Metodo para validar el campo especifico
      */
-    function validate() {
-        //pass;
-    }
+    #function validate() {
+    #    //pass;
+    #}
 
 
     function is_valid() {
@@ -288,8 +315,6 @@ class SelectionField extends FormField {
     }
 
 
-
-
     function __toString() {
         $str = '<select name="'.$this->name.'" '.$this->concat_attr().' >'."\n";
         foreach($this->options as $key => $value) {
@@ -302,12 +327,12 @@ class SelectionField extends FormField {
 
 
 class CheckField extends FormField {
-    
+    //no implementado
 }
 
 
 class RadioField extends FormField {
-    
+    //no implementado
 }
 
 
@@ -398,12 +423,9 @@ class Form {
         $valid = True;
         foreach(get_object_vars($this) as $name => $obj) {
             if ($obj != NULL) {
-
                 #verficacion errores de los campos
-
-                #verificacion de peticion de campo no nulo
                 $obj->required_validate();
-                echo $obj->name;
+                #echo $obj->name;
             }
         }
         #busca metodos de validacion definido por usuario
@@ -420,7 +442,8 @@ class Form {
      * Formatea el formulario con una tabla
      *
      */
-    function as_table() {
+    function as_table() 
+    {
         #$str = "<table> \n";
         $str = "";
         foreach(get_object_vars($this) as $name => $obj) {
@@ -436,35 +459,46 @@ class Form {
 
     /*
      * Formatea el Form
-     */ 
-    function as_p() {
+     */
+    function as_p() 
+    {
+        #pass
     }
 
-    
+
     /*
      * Retorna un String en formato HTML con el listado de errores segun  los
      * atributos del formulario.
      *
      * @return string
      */
-    function errors() {
+    function errors() 
+    {
         $str = "<ul class=\"form-error\">\n";
-        foreach(get_object_vars($this) as $name => $obj) {
+        foreach(get_object_vars($this) as $name => $obj) 
+        {
             #busca metodos de validacion definido por usuario
-            if ($obj != NULL) {
-                $str .= "<li>".$name."\n";
-                $str .= $obj->errors;
-                $str .= "</li>\n";
+            if ($obj != NULL) 
+            {
+               if (!$obj->errors->not_errors())
+               {
+                   $str .= "<li>".$name."\n";
+                   $str .= $obj->errors;
+                   $str .= "</li>\n";
+               }
             }
         }
         $str .= "</ul>\n";
         return $str;
     }
 
+    /*
+     * No especificado
+     */ 
+    function errors_list() 
+    {
+        $errors = array();
 
-    function errors_list() {
-        errors = array();
-        
     }
 
 
@@ -473,7 +507,8 @@ class Form {
      *
      * @return string //en formato html
      */
-    function __toString() {
+    function __toString() 
+    {
         $str = "";
         foreach(get_object_vars($this) as $name => $obj) {
             if ($obj != NULL) {
