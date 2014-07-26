@@ -31,7 +31,7 @@ class MyForm extends Form {
 
     function clean_apellido() 
     {
-        if (strcmp($this->nombre->value, $this->apellido->value)) 
+        if ($this->nombre->value == $this->apellido->value) 
         {
             return True;
         }
