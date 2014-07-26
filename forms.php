@@ -136,7 +136,7 @@ class FormField {
      * @param string $value valor por defecto del campo
      * @param boolean $required si el campo es obligatorio
      * @param array $attr atributos adicionales dentro del campo
-     * @param array condition condiciones de evaluacion
+     * @param array $condition condiciones de validacion de campo
      */
     function __construct($label='', $value='', $required=False, $attr=NULL, $condition=array('NOT_NULL'=>'NULL')) {
         $this->label = $label;
@@ -391,6 +391,14 @@ class DateTimeField extends FormField {
  */
 class Form {
     var $errors;
+
+    /**
+     * Dentro de la subclase en el contructor de la misma, el metodo 
+     * constructor de la clase padre debe ser el ultimo en ser llamado 
+     * 
+     * @param NULL $data 
+     * @param boolean $auto_id si se asigna automaticamente el atributo id al campo
+     */
     function __construct($data=NULL, $auto_id=False) {
         foreach(get_object_vars($this) as $name => $obj) {
             if ($obj != NULL) {
@@ -398,13 +406,14 @@ class Form {
                 if ($auto_id) {
                     $obj->insert_attr('id', $name);
                 }
-                #$obj->auto_id = $auto_id;
-
             }
         }
     }
 
 
+    /**
+     *   
+     */
     function set_data($dict) {
         foreach(get_object_vars($this) as $name => $obj) {
             if (isset($dict[$name])) {
@@ -419,12 +428,22 @@ class Form {
     }
 
 
+
+    /**
+     * Comprueba si todos los campos del formulario son validos
+     */ 
     function is_valid() {
         $valid = True;
         foreach(get_object_vars($this) as $name => $obj) {
             if ($obj != NULL) {
-                #verficacion errores de los campos
+                #validacion errores genericos de los campos
                 $obj->required_validate();
+                $flag = $obj->is_valid(); 
+                if (!$flag) 
+                { 
+                    $valid = False;
+                    echo $obj->name." ";
+                }
                 #echo $obj->name;
             }
         }
@@ -432,9 +451,16 @@ class Form {
         foreach(get_class_methods($this) as $fname) {
             $pos = strpos($fname, "clean_");
             if ($pos !== False) {
-                $this->$fname();
+                $flag = $this->$fname();
+                if (!$flag) 
+                { 
+                    $valid = False;
+                    echo $fname." ";
+                }
             }
         }
+        echo $valid;
+        return $valid;
     }
 
 
@@ -446,8 +472,10 @@ class Form {
     {
         #$str = "<table> \n";
         $str = "";
-        foreach(get_object_vars($this) as $name => $obj) {
-            if ($obj != NULL) {
+        foreach(get_object_vars($this) as $name => $obj) 
+        {
+            if ($obj != NULL) 
+            {
                 $str .= "<tr>\n\t<td>".$obj->label()."</td>\n\t";
                 $str .= "<td>".$obj."</td>\n</tr>\n";
             }
@@ -458,11 +486,30 @@ class Form {
 
 
     /*
-     * Formatea el Form
+     * Formatea los campos del formulario, dentro de elementos <p>
+     *
+     *  @param String $class nombre opcional de la clase para elementos p
+     *
+     *  @return String
      */
-    function as_p() 
+    function as_p($class="") 
     {
-        #pass
+        $str = "";
+        foreach(get_object_vars($this) as $name => $obj) 
+        {
+            if ($obj != NULL) 
+            {
+                if ($class == "")
+                {    
+                    $str .= '<p>'.$obj->label.'</br>'.$obj.'</p>';
+                }
+                else
+                {    
+                    $str .= '<p class="'.$class.'">'.$obj->label.'</br>'.$obj.'</p>';
+                }
+            }
+        }
+        return $str;
     }
 
 
@@ -493,11 +540,63 @@ class Form {
     }
 
     /*
-     * No especificado
+     * Retorna un array asociativo que utiliza por clave el nombre del campo 
+     * y conteniendo contiene un array con todos los mensaje de error de
+     * los campos que reportaron el mismo
+     *
+     * @return array
      */ 
     function errors_list() 
     {
         $errors = array();
+        foreach(get_object_vars($this) as $name => $obj) 
+        {
+            if ($obj != NULL) 
+            {
+                if (!$obj->errors->not_errors())
+                {
+                    $list = array();
+                    foreach ($obj->errors as $error) 
+                    {
+                        $list[] = $error;
+                    }
+                    $errors[$obj->name] = $list;
+                }    
+            }
+        }
+        return $errors;
+    }
+
+
+    /**
+     * Recarga los campos del formularios, con los valores  que se enviaron 
+     * del formulario, opcionalmente tambien se puede agregar un listado con
+     * los campos que no desea que se rellenen
+     *
+     *  @param String $method (POST|GET) 
+     *  @param array $exclude array con los nombre de campos que no se rellenaran
+     */
+    public function get_data($method="POST", $exclude=NULL)
+    {
+        if ($method == 'POST')
+        {
+            foreach(get_object_vars($this) as $name => $obj) 
+            {
+                if ($obj != NULL) 
+                {
+                    #corregir para agregar esclusiones
+                    #if (!in_array($obj->name, $exclude) AND isset($_POST[$obj->name]))
+                    if (isset($_POST[$obj->name]))
+                    {
+                        $obj->value = $_POST[$obj->name];
+                    }
+                }
+            }    
+        }   
+        else #get 
+        {
+
+        }
 
     }
 

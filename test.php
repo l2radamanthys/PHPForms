@@ -17,10 +17,11 @@ class MyForm extends Form {
 
 
     #metodos personalizado de validacion de campo
-    function clean_nombre() {
+    function clean_nombre() 
+    {
         $pos = strpos($this->nombre->value, "hi");
         if ($pos === False) {
-            $this->nombre->add_exception('Error: El campo no contiene la palabra  hi');
+            $this->nombre->add_exception('Error: El campo "nombre" no contiene la palabra  hi');
             return False;
         }
         else { #valid
@@ -28,12 +29,15 @@ class MyForm extends Form {
         }
     }
 
-    function clean_apellido() {
-        if (strcmp($this->nombre, $this->apellido)) {
+    function clean_apellido() 
+    {
+        if (strcmp($this->nombre->value, $this->apellido->value)) 
+        {
             return True;
         }
-        else {
-            $this->apellido->add_exception('Error: El campo no coincide con nombres');
+        else 
+        {
+            $this->apellido->add_exception('Error: El campo "apellido" no coincide con nombres');
             return False;
         }
     }
@@ -42,6 +46,7 @@ class MyForm extends Form {
 
 
 $form = new MyForm(True);
+$form->get_data();
 #$form->nombre->insert_attr('class', 'miclases');
 #$d = array('nombre' => 'Ricardo', 'apellido'=>'Quiroga');
 #$form->set_data($d);
@@ -53,9 +58,8 @@ echo $form->as_table();
 echo '<tr><td colspan="2"><input type="submit"></td></tr>';
 echo "</table></form>";
 
-if (!empty($_POST))
+if (!$form->is_valid())
 {
-    $form->is_valid();
     echo $form->errors();
 }
 ?>

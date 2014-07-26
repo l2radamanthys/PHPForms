@@ -5,12 +5,15 @@
  *
  */
 
-function field_in_range_str($str, $min, $max) {
+function field_in_range_str($str, $min, $max) 
+{
     $len = lenght($str);
-    if ($len < $min OR $len > $max) {
+    if ($len < $min OR $len > $max) 
+    {
         return False;
     }
-    else {
+    else 
+    {
         return True;
     }
 }
@@ -27,6 +30,13 @@ function field_is_int($value)
         return False;
     }
 }
+
+
+function field_is_email($value)
+{
+
+}
+
 
 
 ?>
